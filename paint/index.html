@@ -11,6 +11,7 @@
         width: 100px;
         height: 50px;
         background-color: red;
+        transition: left 0.2s linear, top 0.2s linear;
       }
     </style>
   </head>
@@ -21,26 +22,53 @@
       var car = document.getElementById("car");
       var positionX = 0;
       var positionY = 0;
+      var speedX = 0;
+      var speedY = 0;
+      var acceleration = 0.2;
+      var friction = 0.05;
+      var maxSpeed = 5;
+
+      var keys = {};
 
       document.addEventListener("keydown", function (event) {
-        var key = event.keyCode;
-        if (key === 37) {
+        keys[event.keyCode] = true;
+      });
+
+      document.addEventListener("keyup", function (event) {
+        delete keys[event.keyCode];
+      });
+
+      function moveCar() {
+        if (37 in keys && speedX > -maxSpeed) {
           // Pfeiltaste nach links
-          positionX -= 10;
-        } else if (key === 39) {
-          // Pfeiltaste nach rechts
-          positionX += 10;
-        } else if (key === 38) {
-          // Pfeiltaste nach oben
-          positionY -= 10;
-        } else if (key === 40) {
-          // Pfeiltaste nach unten
-          positionY += 10;
+          speedX -= acceleration;
         }
+        if (39 in keys && speedX < maxSpeed) {
+          // Pfeiltaste nach rechts
+          speedX += acceleration;
+        }
+        if (38 in keys && speedY > -maxSpeed) {
+          // Pfeiltaste nach oben
+          speedY -= acceleration;
+        }
+        if (40 in keys && speedY < maxSpeed) {
+          // Pfeiltaste nach unten
+          speedY += acceleration;
+        }
+
+        positionX += speedX;
+        positionY += speedY;
+
+        speedX *= 1 - friction;
+        speedY *= 1 - friction;
 
         car.style.left = positionX + "px";
         car.style.top = positionY + "px";
-      });
+
+        requestAnimationFrame(moveCar);
+      }
+
+      moveCar();
     </script>
   </body>
 </html>
