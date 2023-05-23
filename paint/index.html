@@ -1,50 +1,46 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Online-Zeichenfläche</title>
+    <title>Autofahren</title>
     <style>
-      #canvas {
-        border: 1px solid black;
+      #car {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100px;
+        height: 50px;
+        background-color: red;
       }
     </style>
   </head>
   <body>
-    <canvas id="canvas" width="800" height="600"></canvas>
+    <div id="car"></div>
 
     <script>
-      var canvas = document.getElementById("canvas");
-      var context = canvas.getContext("2d");
+      var car = document.getElementById("car");
+      var positionX = 0;
+      var positionY = 0;
 
-      var isDrawing = false;
+      document.addEventListener("keydown", function (event) {
+        var key = event.keyCode;
+        if (key === 37) {
+          // Pfeiltaste nach links
+          positionX -= 10;
+        } else if (key === 39) {
+          // Pfeiltaste nach rechts
+          positionX += 10;
+        } else if (key === 38) {
+          // Pfeiltaste nach oben
+          positionY -= 10;
+        } else if (key === 40) {
+          // Pfeiltaste nach unten
+          positionY += 10;
+        }
 
-      canvas.addEventListener("mousedown", startDrawing);
-      canvas.addEventListener("mousemove", draw);
-      canvas.addEventListener("mouseup", stopDrawing);
-      canvas.addEventListener("mouseout", stopDrawing);
-
-      function startDrawing(e) {
-        isDrawing = true;
-        draw(e);
-      }
-
-      function draw(e) {
-        if (!isDrawing) return;
-
-        var x = e.clientX - canvas.offsetLeft;
-        var y = e.clientY - canvas.offsetTop;
-
-        context.lineWidth = 2;
-        context.lineCap = "round";
-        context.lineTo(x, y);
-        context.stroke();
-        context.beginPath();
-        context.moveTo(x, y);
-      }
-
-      function stopDrawing() {
-        isDrawing = false;
-        context.beginPath();
-      }
+        car.style.left = positionX + "px";
+        car.style.top = positionY + "px";
+      });
     </script>
   </body>
 </html>
