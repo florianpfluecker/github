@@ -22,11 +22,12 @@
       var car = document.getElementById("car");
       var positionX = 0;
       var positionY = 0;
-      var speedX = 0;
-      var speedY = 0;
+      var rotation = 0;
+      var speed = 0;
       var acceleration = 0.2;
       var friction = 0.05;
       var maxSpeed = 5;
+      var angleIncrement = 5;
 
       var keys = {};
 
@@ -39,34 +40,32 @@
       });
 
       function moveCar() {
-        if (37 in keys && speedX > -maxSpeed) {
+        if (37 in keys) {
           // Pfeiltaste nach links
-          speedX -= acceleration;
+          rotation -= angleIncrement;
         }
-        if (39 in keys && speedX < maxSpeed) {
+        if (39 in keys) {
           // Pfeiltaste nach rechts
-          speedX += acceleration;
+          rotation += angleIncrement;
         }
-        if (38 in keys && speedY > -maxSpeed) {
+        if (38 in keys && speed < maxSpeed) {
           // Pfeiltaste nach oben
-          speedY -= acceleration;
+          speed += acceleration;
         }
-        if (40 in keys && speedY < maxSpeed) {
+        if (40 in keys && speed > -maxSpeed) {
           // Pfeiltaste nach unten
-          speedY += acceleration;
+          speed -= acceleration;
         }
 
-        positionX += speedX;
-        positionY += speedY;
+        positionX += speed * Math.cos(rotation * (Math.PI / 180));
+        positionY += speed * Math.sin(rotation * (Math.PI / 180));
 
-        speedX *= 1 - friction;
-        speedY *= 1 - friction;
+        speed *= 1 - friction;
 
         car.style.left = positionX + "px";
         car.style.top = positionY + "px";
-
-        var angle = Math.atan2(speedY, speedX) * (180 / Math.PI);
-        car.style.transform = "translate(-50%, -50%) rotate(" + angle + "deg)";
+        car.style.transform =
+          "translate(-50%, -50%) rotate(" + rotation + "deg)";
 
         requestAnimationFrame(moveCar);
       }
