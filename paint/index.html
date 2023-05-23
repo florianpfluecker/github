@@ -1,88 +1,110 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Autofahren</title>
+    <title>Multiplayer Autofahren</title>
     <style>
-      #car {
+      .car {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
         width: 100px;
         height: 50px;
-        background-color: lightgreen;
-        border-radius: 10px;
+        background-color: red;
         transition: left 0.2s linear, top 0.2s linear, transform 0.2s linear;
       }
     </style>
   </head>
   <body>
-    <div id="car"></div>
-
     <script>
-      var car = document.getElementById("car");
-      var positionX = 0;
-      var positionY = 0;
-      var rotation = 0;
-      var speed = 0;
-      var acceleration = 0.2;
-      var boostAcceleration = 0.4;
-      var friction = 0.05;
-      var maxSpeed = 5;
-      var angleIncrement = 5;
+      const socket = new WebSocket("ws://localhost:8080");
 
-      var keys = {};
+      const cars = {};
 
-      document.addEventListener("keydown", function (event) {
-        keys[event.keyCode] = true;
+      socket.addEventListener("open", (event) => {
+        console.log("Verbunden mit dem WebSocket-Server");
+      });
 
-        if (event.keyCode === 32) {
-          // Leertaste
-          acceleration = boostAcceleration;
+      socket.addEventListener("message", (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.type === "init") {
+          // Initialisierung - Daten für alle Autos erhalten
+          const { clientId, cars } = data;
+
+          // Für jedes Auto ein DOM-Element erstellen und hinzufügen
+          for (const carId in cars) {
+            const car = createCarElement(carId);
+            document.body.appendChild(car);
+          }
+
+          // Event Listener für Tastatureingaben hinzufügen
+          window.addEventListener("keydown", handleKeyDown);
+          window.addEventListener("keyup", handleKeyUp);
+        } else if (data.type === "update") {
+          // Aktualisierte Daten für ein Auto erhalten
+          const { car } = data;
+
+          // Das DOM-Element des Autos aktualisieren
+          updateCarElement(car.id, car.x, car.y, car.rotation);
+        } else if (data.type === "remove") {
+          // Ein Auto wurde entfernt
+          const { clientId } = data;
+
+          // Das DOM-Element des Autos entfernen
+          removeCarElement(clientId);
         }
       });
 
-      document.addEventListener("keyup", function (event) {
-        delete keys[event.keyCode];
-
-        if (event.keyCode === 32) {
-          // Leertaste
-          acceleration = 0.2;
-        }
-      });
-
-      function moveCar() {
-        if (37 in keys) {
-          // Pfeiltaste nach links
-          rotation -= angleIncrement;
-        }
-        if (39 in keys) {
-          // Pfeiltaste nach rechts
-          rotation += angleIncrement;
-        }
-        if (38 in keys && speed < maxSpeed) {
-          // Pfeiltaste nach oben
-          speed += acceleration;
-        }
-        if (40 in keys && speed > -maxSpeed) {
-          // Pfeiltaste nach unten
-          speed -= acceleration;
-        }
-
-        positionX += speed * Math.cos(rotation * (Math.PI / 180));
-        positionY += speed * Math.sin(rotation * (Math.PI / 180));
-
-        speed *= 1 - friction;
-
-        car.style.left = positionX + "px";
-        car.style.top = positionY + "px";
-        car.style.transform =
-          "translate(-50%, -50%) rotate(" + rotation + "deg)";
-
-        requestAnimationFrame(moveCar);
+      function createCarElement(carId) {
+        const car = document.createElement("div");
+        car.id = carId;
+        car.classList.add("car");
+        return car;
       }
 
-      moveCar();
+      function updateCarElement(carId, x, y, rotation) {
+        const car = document.getElementById(carId);
+        car.style.left = x + "px";
+        car.style.top = y + "px";
+        car.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+      }
+
+      function removeCarElement(carId) {
+        const car = document.getElementById(carId);
+        if (car) {
+          car.parentNode.removeChild(car);
+        }
+      }
+
+      function handleKeyDown(event) {
+        const key = event.keyCode;
+
+        // Tastatur-Eingaben verarbeiten und Nachrichten an den Server senden
+        if (key === 37 || key === 39 || key === 38 || key === 40) {
+          event.preventDefault();
+          const speed = key === 38 ? 1 : key === 40 ? -1 : 0;
+          const rotation = key === 37 ? -5 : key === 39 ? 5 : 0;
+          socket.send(
+            JSON.stringify({ type: "update", x: 0, y: 0, rotation, speed })
+          );
+        }
+      }
+
+      function handleKeyUp(event) {
+        const key = event.keyCode;
+
+        // Tastatur-Eingaben verarbeiten und Nachrichten an den Server senden
+        if (key === 37 || key === 39 || key === 38 || key === 40) {
+          event.preventDefault();
+          socket.send(
+            JSON.stringify({
+              type: "update",
+              x: 0,
+              y: 0,
+              rotation: 0,
+              speed: 0,
+            })
+          );
+        }
+      }
     </script>
   </body>
 </html>
